@@ -13,6 +13,7 @@ if PY3:
     indexbytes = operator.getitem
     intlist2bytes = bytes
     int2byte = operator.methodcaller("to_bytes", 1, "big")
+    xrange = range
 else:
     int2byte = chr
 
@@ -87,7 +88,6 @@ def edwards(P, Q):
 
     return (x3 % q, y3 % q)
 
-
 def scalarmult(P, e):
     if e == 0:
         return (0, 1)
@@ -99,6 +99,27 @@ def scalarmult(P, e):
         Q = edwards(Q, P)
 
     return Q
+
+
+Bpow = []  # Bpow[i] == scalarmult(B, 2**i)
+
+def make_Bpow():
+    P = B
+    for i in xrange(253):
+        Bpow.append(P)
+        P = edwards(P, P)
+make_Bpow()
+
+def scalarmult_B(e):
+    """== scalarmult(B, e)"""
+    e = e % l  # scalarmult(B, l) is the identity, i.e. (0, 1)
+    P = (0, 1)
+    for i in xrange(253):
+        if e & 1:
+            P = edwards(P, Bpow[i])
+        e = e // 2
+    assert e == 0, e
+    return P
 
 
 def encodeint(y):
@@ -126,7 +147,7 @@ def bit(h, i):
 def publickey(sk):
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
-    A = scalarmult(B, a)
+    A = scalarmult_B(a)
     return encodepoint(A)
 
 
@@ -141,7 +162,7 @@ def signature(m, sk, pk):
     r = Hint(
         intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
     )
-    R = scalarmult(B, r)
+    R = scalarmult_B(r)
     S = (r + Hint(encodepoint(R) + pk + m) * a) % l
     return encodepoint(R) + encodeint(S)
 
@@ -182,5 +203,5 @@ def checkvalid(s, m, pk):
     S = decodeint(s[b // 8:b // 4])
     h = Hint(encodepoint(R) + pk + m)
 
-    if scalarmult(B, S) != edwards(R, scalarmult(A, h)):
+    if scalarmult_B(S) != edwards(R, scalarmult(A, h)):
         raise Exception("signature does not pass verification")
