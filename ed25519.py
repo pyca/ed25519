@@ -37,10 +37,8 @@ B = (Bx % q, By % q)
 
 
 def edwards(P, Q):
-    x1 = P[0]
-    y1 = P[1]
-    x2 = Q[0]
-    y2 = Q[1]
+    x1, y1 = P
+    x2, y2 = Q
     x3 = (x1 * y2 + x2 * y1) * inv(1 + d * x1 * x2 * y1 * y2)
     y3 = (y1 * y2 + x1 * x2) * inv(1 - d * x1 * x2 * y1 * y2)
 
