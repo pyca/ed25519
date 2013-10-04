@@ -1,5 +1,6 @@
 import hashlib
 
+
 b = 256
 q = 2**255 - 19
 l = 2**252 + 27742317777372353535851937790883648493
@@ -9,28 +10,17 @@ def H(m):
     return hashlib.sha512(m).digest()
 
 
-def expmod(b, e, m):
-    if e == 0:
-        return 1
-
-    t = expmod(b, e/2, m)**2 % m
-
-    if e & 1:
-        t = (t*b) % m
-    return t
-
-
 def inv(x):
-    return expmod(x, q-2, q)
+    return pow(x, q - 2, q)
 
 
 d = -121665 * inv(121666)
-I = expmod(2, (q-1)/4, q)
+I = pow(2, (q - 1) / 4, q)
 
 
 def xrecover(y):
     xx = (y*y-1) * inv(d*y*y+1)
-    x = expmod(xx, (q+3)/8, q)
+    x = pow(xx, (q + 3) / 8, q)
 
     if (x*x - xx) % q != 0:
         x = (x*I) % q
