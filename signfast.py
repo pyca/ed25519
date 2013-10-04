@@ -25,7 +25,7 @@ while 1:
   line = sys.stdin.readline()
   if not line: break
   print(".", end="")
-  x = line.split(':')
+  x = [j.encode("ascii") for j in line.split(':')]
   sk = binascii.unhexlify(x[0][0:64])
   pk = ed25519.publickey(sk)
   m = binascii.unhexlify(x[2])
