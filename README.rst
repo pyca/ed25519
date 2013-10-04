@@ -11,11 +11,14 @@ for a faster runtime. It does not include protections against side channel
 attacks. The original reference implementation can be found on the
 `authors website <http://ed25519.cr.yp.to/software.html>`_.
 
-.. warning::
-    This code is almost never what you want. It is hopefully useful in cases
-    where you absolutely cannot have any C code dependencies. Unless you
-    absolutely cannot have C code dependencies you would be better off using
-    something like `PyNaCl <https://github.com/dstufft/pynacl>`_.
+
+Warning
+-------
+
+This code is almost never what you want. It is hopefully useful in cases
+where you absolutely cannot have any C code dependencies. Unless you
+absolutely cannot have C code dependencies you would be better off using
+something like `PyNaCl <https://github.com/dstufft/pynacl>`_.
 
 
 Running the tests
