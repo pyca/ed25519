@@ -9,12 +9,19 @@ import ed25519
 
 def ed25519_known_answers():
     # Known answers taken from: http://ed25519.cr.yp.to/python/sign.input
+    # File Format is a lined based file where each line has sk, pk, m, sm
+    #   - Each field hex
+    #   - Each field colon-terminated
+    #   - sk includes pk at end
+    #   - sm includes m at end
     path = os.path.join(os.path.dirname(__file__), "test_data", "ed25519")
     with codecs.open(path, "r", encoding="utf-8") as fp:
         for line in fp:
             x = line.split(":")
             yield (
                 # Secret Key
+                # Secret key is 32 bytes long, or 64 hex characters and has
+                #   public key appended to it
                 x[0][0:64].encode("ascii"),
                 # Public Key
                 x[1].encode("ascii"),
@@ -23,6 +30,8 @@ def ed25519_known_answers():
                 # Signed Message
                 x[3].encode("ascii"),
                 # Signature Only
+                # Signature comes from the Signed Message, it is 32 bytes long
+                #   and has the message appended to it
                 binascii.hexlify(
                     binascii.unhexlify(x[3].encode("ascii"))[:64]
                 ),
