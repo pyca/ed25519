@@ -13,6 +13,7 @@ if PY3:
     indexbytes = operator.getitem
     intlist2bytes = bytes
     int2byte = operator.methodcaller("to_bytes", 1, "big")
+    xrange = range
 else:
     int2byte = chr
 
