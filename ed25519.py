@@ -1,4 +1,22 @@
 import hashlib
+import operator
+import sys
+
+# Useful for very coarse version differentiation.
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    indexbytes = operator.getitem
+    intlist2bytes = bytes
+    int2byte = operator.methodcaller("to_bytes", 1, "big")
+else:
+    int2byte = chr
+
+    def indexbytes(buf, i):
+        return ord(buf[i])
+
+    def intlist2bytes(l):
+        return b"".join(chr(c) for c in l)
 
 
 b = 256
@@ -15,12 +33,12 @@ def inv(x):
 
 
 d = -121665 * inv(121666)
-I = pow(2, (q - 1) / 4, q)
+I = pow(2, (q - 1) // 4, q)
 
 
 def xrecover(y):
     xx = (y * y - 1) * inv(d * y * y + 1)
-    x = pow(xx, (q + 3) / 8, q)
+    x = pow(xx, (q + 3) // 8, q)
 
     if (x * x - xx) % q != 0:
         x = (x * I) % q
@@ -49,7 +67,7 @@ def scalarmult(P, e):
     if e == 0:
         return (0, 1)
 
-    Q = scalarmult(P, e / 2)
+    Q = scalarmult(P, e // 2)
     Q = edwards(Q, Q)
 
     if e & 1:
@@ -60,9 +78,9 @@ def scalarmult(P, e):
 
 def encodeint(y):
     bits = [(y >> i) & 1 for i in range(b)]
-    return ''.join([
-        chr(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b/8)
+    return b''.join([
+        int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
+        for i in range(b//8)
     ])
 
 
@@ -70,14 +88,14 @@ def encodepoint(P):
     x = P[0]
     y = P[1]
     bits = [(y >> i) & 1 for i in range(b - 1)] + [x & 1]
-    return ''.join([
-        chr(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b/8)
+    return b''.join([
+        int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
+        for i in range(b//8)
     ])
 
 
 def bit(h, i):
-    return (ord(h[i / 8]) >> (i % 8)) & 1
+    return (indexbytes(h, i // 8) >> (i % 8)) & 1
 
 
 def publickey(sk):
@@ -95,7 +113,9 @@ def Hint(m):
 def signature(m, sk, pk):
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
-    r = Hint(''.join([h[j] for j in range(b / 8, b / 4)]) + m)
+    r = Hint(
+        intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
+    )
     R = scalarmult(B, r)
     S = (r + Hint(encodepoint(R) + pk + m) * a) % l
     return encodepoint(R) + encodeint(S)
@@ -126,15 +146,15 @@ def decodepoint(s):
 
 
 def checkvalid(s, m, pk):
-    if len(s) != b / 4:
+    if len(s) != b // 4:
         raise Exception("signature length is wrong")
 
-    if len(pk) != b / 8:
+    if len(pk) != b // 8:
         raise Exception("public-key length is wrong")
 
-    R = decodepoint(s[:b / 8])
+    R = decodepoint(s[:b // 8])
     A = decodepoint(pk)
-    S = decodeint(s[b / 8:b / 4])
+    S = decodeint(s[b // 8:b // 4])
     h = Hint(encodepoint(R) + pk + m)
 
     if scalarmult(B, S) != edwards(R, scalarmult(A, h)):

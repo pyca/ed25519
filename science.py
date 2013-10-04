@@ -6,7 +6,7 @@ import ed25519
 
 seed = os.urandom(32)
 
-data = "The quick brown fox jumps over the lazy dog"
+data = b"The quick brown fox jumps over the lazy dog"
 private_key = seed
 public_key = ed25519.publickey(seed)
 signature = ed25519.signature(data, private_key, public_key)
