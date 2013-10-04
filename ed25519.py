@@ -2,6 +2,10 @@ import hashlib
 import operator
 import sys
 
+
+__version__ = "1.0.dev0"
+
+
 # Useful for very coarse version differentiation.
 PY3 = sys.version_info[0] == 3
 
