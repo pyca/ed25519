@@ -2,8 +2,8 @@ import hashlib
 
 
 b = 256
-q = 2**255 - 19
-l = 2**252 + 27742317777372353535851937790883648493
+q = 2 ** 255 - 19
+l = 2 ** 252 + 27742317777372353535851937790883648493
 
 
 def H(m):
@@ -19,11 +19,11 @@ I = pow(2, (q - 1) / 4, q)
 
 
 def xrecover(y):
-    xx = (y*y-1) * inv(d*y*y+1)
+    xx = (y * y - 1) * inv(d * y * y + 1)
     x = pow(xx, (q + 3) / 8, q)
 
-    if (x*x - xx) % q != 0:
-        x = (x*I) % q
+    if (x * x - xx) % q != 0:
+        x = (x * I) % q
 
     if x % 2 != 0:
         x = q-x
@@ -33,7 +33,7 @@ def xrecover(y):
 
 By = 4 * inv(5)
 Bx = xrecover(By)
-B = [Bx % q, By % q]
+B = (Bx % q, By % q)
 
 
 def edwards(P, Q):
@@ -41,15 +41,15 @@ def edwards(P, Q):
     y1 = P[1]
     x2 = Q[0]
     y2 = Q[1]
-    x3 = (x1*y2+x2*y1) * inv(1+d*x1*x2*y1*y2)
-    y3 = (y1*y2+x1*x2) * inv(1-d*x1*x2*y1*y2)
+    x3 = (x1 * y2 + x2 * y1) * inv(1 + d * x1 * x2 * y1 * y2)
+    y3 = (y1 * y2 + x1 * x2) * inv(1 - d * x1 * x2 * y1 * y2)
 
-    return [x3 % q, y3 % q]
+    return (x3 % q, y3 % q)
 
 
 def scalarmult(P, e):
     if e == 0:
-        return [0, 1]
+        return (0, 1)
 
     Q = scalarmult(P, e/2)
     Q = edwards(Q, Q)
@@ -79,48 +79,47 @@ def encodepoint(P):
 
 
 def bit(h, i):
-    return (ord(h[i/8]) >> (i % 8)) & 1
+    return (ord(h[i / 8]) >> (i % 8)) & 1
 
 
 def publickey(sk):
     h = H(sk)
-    a = 2**(b-2) + sum(2**i * bit(h, i) for i in range(3, b-2))
+    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
     A = scalarmult(B, a)
     return encodepoint(A)
 
 
 def Hint(m):
     h = H(m)
-    return sum(2**i * bit(h, i) for i in range(2*b))
+    return sum(2 ** i * bit(h, i) for i in range(2 * b))
 
 
 def signature(m, sk, pk):
     h = H(sk)
-    a = 2**(b-2) + sum(2**i * bit(h, i) for i in range(3, b-2))
-    r = Hint(''.join([h[j] for j in range(b/8, b/4)]) + m)
+    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    r = Hint(''.join([h[j] for j in range(b / 8, b / 4)]) + m)
     R = scalarmult(B, r)
     S = (r + Hint(encodepoint(R) + pk + m) * a) % l
     return encodepoint(R) + encodeint(S)
 
 
 def isoncurve(P):
-    x = P[0]
-    y = P[1]
-    return (-x*x + y*y - 1 - d*x*x*y*y) % q == 0
+    x, y = P
+    return (-x * x + y * y - 1 - d * x * x * y * y) % q == 0
 
 
 def decodeint(s):
-    return sum(2**i * bit(s, i) for i in range(0, b))
+    return sum(2 ** i * bit(s, i) for i in range(0, b))
 
 
 def decodepoint(s):
-    y = sum(2**i * bit(s, i) for i in range(0, b-1))
+    y = sum(2 ** i * bit(s, i) for i in range(0, b - 1))
     x = xrecover(y)
 
     if x & 1 != bit(s,  b-1):
         x = q-x
 
-    P = [x, y]
+    P = (x, y)
 
     if not isoncurve(P):
         raise Exception("decoding point that is not on curve")
@@ -129,15 +128,15 @@ def decodepoint(s):
 
 
 def checkvalid(s, m, pk):
-    if len(s) != b/4:
+    if len(s) != b / 4:
         raise Exception("signature length is wrong")
 
-    if len(pk) != b/8:
+    if len(pk) != b / 8:
         raise Exception("public-key length is wrong")
 
-    R = decodepoint(s[0:b/8])
+    R = decodepoint(s[:b / 8])
     A = decodepoint(pk)
-    S = decodeint(s[b/8:b/4])
+    S = decodeint(s[b / 8:b / 4])
     h = Hint(encodepoint(R) + pk + m)
 
     if scalarmult(B, S) != edwards(R, scalarmult(A, h)):
