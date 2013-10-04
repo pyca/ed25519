@@ -9,34 +9,29 @@ import ed25519
 
 def ed25519_known_answers():
     # Known answers taken from: http://ed25519.cr.yp.to/python/sign.input
-    answers = []
-
     path = os.path.join(os.path.dirname(__file__), "test_data", "ed25519")
     with codecs.open(path, "r", encoding="utf-8") as fp:
         for line in fp:
             x = line.split(":")
-            answers.append({
-                "secret_key": x[0][0:64].encode("ascii"),
-                "public_key": x[1].encode("ascii"),
-                "message": x[2].encode("ascii"),
-                "signed": x[3].encode("ascii"),
-                "signature": binascii.hexlify(
+            yield (
+                # Secret Key
+                x[0][0:64].encode("ascii"),
+                # Public Key
+                x[1].encode("ascii"),
+                # Message
+                x[2].encode("ascii"),
+                # Signed Message
+                x[3].encode("ascii"),
+                # Signature Only
+                binascii.hexlify(
                     binascii.unhexlify(x[3].encode("ascii"))[:64]
                 ),
-            })
-
-    return answers
+            )
 
 
 @pytest.mark.parametrize(
     ("secret_key", "public_key", "message", "signed", "signature"),
-    [
-        (
-            x["secret_key"], x["public_key"], x["message"], x["signed"],
-            x["signature"],
-        )
-        for x in ed25519_known_answers()
-    ]
+    ed25519_known_answers(),
 )
 def test_ed25519_kat(secret_key, public_key, message, signed, signature):
     sk = binascii.unhexlify(secret_key)
