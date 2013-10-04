@@ -10,8 +10,29 @@ def H(m):
     return hashlib.sha512(m).digest()
 
 
+def pow2(x, p):
+    """== pow(x, 2**p, q)"""
+    while p > 0:
+        x = x * x % q
+        p -= 1
+    return x
+
+def powcyclo(x, p, k):
+    """== pow(x, 1 + 2**p + ... + 2**((k-1)*p), q)"""
+    c = x
+    while k > 1:
+        c = x * pow2(c, p) % q
+        k -= 1
+    return c
+
 def inv(x):
-    return pow(x, q - 2, q)
+    """$= x^{-1} \mod q$, for x != 0"""
+    # q-2 == 32*(2**250 - 1) + 11
+    i = pow(x, 32*31, q)         # == x**(32 * (2**5 - 1))
+    i = powcyclo(i, 5, 5)        # == x**(32 * (2**25 - 1))
+    i = powcyclo(i, 25, 5)       # == x**(32 * (2**125 - 1))
+    i = powcyclo(i, 125, 2)      # == x**(32 * (2**250 - 1))
+    return i * pow(x, 11, q) % q # == x**(q-2)
 
 
 d = -121665 * inv(121666)
