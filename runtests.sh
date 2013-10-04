@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 python -u signfast.py < sign.input
 
