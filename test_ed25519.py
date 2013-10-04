@@ -63,3 +63,18 @@ def test_ed25519_kat(secret_key, public_key, message, signed, signature):
                 [chr(ord(m[i]) + (i == len(m) - 1)) for i in range(len(m))]
             )
         ed25519.checkvalid(sig, forgedm, pk)
+
+
+def test_checkparams():
+    # Taken from checkparams.py from DJB
+    assert ed25519.b >= 10
+    assert 8 * len(ed25519.H(b"hash input")) == 2 * ed25519.b
+    assert pow(2, ed25519.q - 1, ed25519.q) == 1
+    assert ed25519.q % 4 == 1
+    assert pow(2, ed25519.l - 1, ed25519.l) == 1
+    assert ed25519.l >= 2 ** (ed25519.b - 4)
+    assert ed25519.l <= 2 ** (ed25519.b - 3)
+    assert pow(ed25519.d, (ed25519.q - 1) // 2, ed25519.q) == ed25519.q - 1
+    assert pow(ed25519.I, 2, ed25519.q) == ed25519.q - 1
+    assert ed25519.isoncurve(ed25519.B)
+    assert ed25519.scalarmult(ed25519.B, ed25519.l) == (0, 1)
