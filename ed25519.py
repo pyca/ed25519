@@ -43,9 +43,6 @@ def inv(z):
     """
     Use the extended Euclidean algorithm to find the inverse mod q.
 
-    Python's arithmetic is abysmal -- multiplication and division
-    are both quadratic, so this is likely the fastest way to do this.
-
     See, for example, H. Cohen, A Course in Computational Algebraic Number
     Theory, Algorithm 1.3.6
     """
