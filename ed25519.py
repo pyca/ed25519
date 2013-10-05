@@ -1,4 +1,26 @@
 import hashlib
+import operator
+import sys
+
+
+__version__ = "1.0.dev0"
+
+
+# Useful for very coarse version differentiation.
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    indexbytes = operator.getitem
+    intlist2bytes = bytes
+    int2byte = operator.methodcaller("to_bytes", 1, "big")
+else:
+    int2byte = chr
+
+    def indexbytes(buf, i):
+        return ord(buf[i])
+
+    def intlist2bytes(l):
+        return b"".join(chr(c) for c in l)
 
 
 b = 256
@@ -10,17 +32,38 @@ def H(m):
     return hashlib.sha512(m).digest()
 
 
-def inv(x):
-    return pow(x, q - 2, q)
+def pow2(x, p):
+    """== pow(x, 2**p, q)"""
+    while p > 0:
+        x = x * x % q
+        p -= 1
+    return x
+
+
+def inv(z):
+    """$= z^{-1} \mod q$, for z != 0"""
+    # Adapted from curve25519_athlon.c in djb's Curve25519.
+    z2 = z * z % q                                # 2
+    z9 = pow2(z2, 2) * z % q                      # 9
+    z11 = z9 * z2 % q                             # 11
+    z2_5_0 = (z11 * z11) % q * z9 % q             # 31 == 2^5 - 2^0
+    z2_10_0 = pow2(z2_5_0, 5) * z2_5_0 % q        # 2^10 - 2^0
+    z2_20_0 = pow2(z2_10_0, 10) * z2_10_0 % q     # ...
+    z2_40_0 = pow2(z2_20_0, 20) * z2_20_0 % q
+    z2_50_0 = pow2(z2_40_0, 10) * z2_10_0 % q
+    z2_100_0 = pow2(z2_50_0, 50) * z2_50_0 % q
+    z2_200_0 = pow2(z2_100_0, 100) * z2_100_0 % q
+    z2_250_0 = pow2(z2_200_0, 50) * z2_50_0 % q   # 2^250 - 2^0
+    return pow2(z2_250_0, 5) * z11 % q            # 2^255 - 2^5 + 11 = q - 2
 
 
 d = -121665 * inv(121666)
-I = pow(2, (q - 1) / 4, q)
+I = pow(2, (q - 1) // 4, q)
 
 
 def xrecover(y):
     xx = (y * y - 1) * inv(d * y * y + 1)
-    x = pow(xx, (q + 3) / 8, q)
+    x = pow(xx, (q + 3) // 8, q)
 
     if (x * x - xx) % q != 0:
         x = (x * I) % q
@@ -48,7 +91,7 @@ def scalarmult(P, e):
     if e == 0:
         return (0, 1)
 
-    Q = scalarmult(P, e / 2)
+    Q = scalarmult(P, e // 2)
     Q = edwards(Q, Q)
 
     if e & 1:
@@ -80,24 +123,23 @@ def scalarmult_B(e):
 
 def encodeint(y):
     bits = [(y >> i) & 1 for i in range(b)]
-    return ''.join([
-        chr(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b/8)
+    return b''.join([
+        int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
+        for i in range(b//8)
     ])
 
 
 def encodepoint(P):
-    x = P[0]
-    y = P[1]
+    x, y = P
     bits = [(y >> i) & 1 for i in range(b - 1)] + [x & 1]
-    return ''.join([
-        chr(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b/8)
+    return b''.join([
+        int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
+        for i in range(b // 8)
     ])
 
 
 def bit(h, i):
-    return (ord(h[i / 8]) >> (i % 8)) & 1
+    return (indexbytes(h, i // 8) >> (i % 8)) & 1
 
 
 def publickey(sk):
@@ -116,6 +158,9 @@ def signature(m, sk, pk):
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
     r = Hint(''.join([h[j] for j in range(b / 8, b / 4)]) + m)
+    r = Hint(
+        intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
+    )
     R = scalarmult_B(r)
     S = (r + Hint(encodepoint(R) + pk + m) * a) % l
     return encodepoint(R) + encodeint(S)
@@ -140,22 +185,26 @@ def decodepoint(s):
     P = (x, y)
 
     if not isoncurve(P):
-        raise Exception("decoding point that is not on curve")
+        raise ValueError("decoding point that is not on curve")
 
     return P
 
 
+class SignatureMismatch(Exception):
+    pass
+
+
 def checkvalid(s, m, pk):
-    if len(s) != b / 4:
-        raise Exception("signature length is wrong")
+    if len(s) != b // 4:
+        raise ValueError("signature length is wrong")
 
-    if len(pk) != b / 8:
-        raise Exception("public-key length is wrong")
+    if len(pk) != b // 8:
+        raise ValueError("public-key length is wrong")
 
-    R = decodepoint(s[:b / 8])
+    R = decodepoint(s[:b // 8])
     A = decodepoint(pk)
-    S = decodeint(s[b / 8:b / 4])
+    S = decodeint(s[b // 8:b // 4])
     h = Hint(encodepoint(R) + pk + m)
 
     if scalarmult_B(S) != edwards(R, scalarmult(A, h)):
-        raise Exception("signature does not pass verification")
+        raise SignatureMismatch("signature does not pass verification")
