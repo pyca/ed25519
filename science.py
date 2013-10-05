@@ -31,7 +31,7 @@ print(
     timeit.timeit(
         "ed25519.publickey(seed)",
         setup="from __main__ import ed25519, seed",
-        number=10,
+        number=100,
     )
 )
 
@@ -40,7 +40,7 @@ print(
     timeit.timeit(
         "ed25519.signature(data, private_key, public_key)",
         setup="from __main__ import ed25519, data, private_key, public_key",
-        number=10,
+        number=100,
     )
 )
 
@@ -50,6 +50,6 @@ print(
     timeit.timeit(
         "ed25519.checkvalid(signature, data, public_key)",
         setup="from __main__ import ed25519, signature, data, public_key",
-        number=10,
+        number=100,
     )
 )
