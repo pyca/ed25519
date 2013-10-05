@@ -40,26 +40,24 @@ def pow2(x, p):
     return x
 
 def inv(z):
-    """Use the extended Euclidean algorithm to find the inverse mod q.
-
-       Python's arithmetic is abysmal -- multiplication and division
-       are both quadratic, so this is likely the fastest way to do this.
-
-       See, for example, H. Cohen, A Course in Computational Algebraic Number
-       Theory, Algorithm 1.3.6
     """
-    a, b = z, q
-    if b == 0:
+    Use the extended Euclidean algorithm to find the inverse mod q.
+
+    Python's arithmetic is abysmal -- multiplication and division
+    are both quadratic, so this is likely the fastest way to do this.
+
+    See, for example, H. Cohen, A Course in Computational Algebraic Number
+    Theory, Algorithm 1.3.6
+    """
+    d, div = z, q
+    if div == 0:
         return 1
     u = 1
-    d = a
     r = 0
-    div = b
-    while True:
-        if div == 0:
-          return u
-        qq, div, d = d // div, d % div, div
+    while div != 0:
+        (qq, div), d = divmod(d, div), div
         r, u = u - qq * r, r
+    return u
 
 
 d = -121665 * inv(121666)
