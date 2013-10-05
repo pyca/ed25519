@@ -90,7 +90,7 @@ def scalarmult(P, e):
     if e == 0:
         return (0, 1)
 
-    Q = scalarmult(P, e / 2)
+    Q = scalarmult(P, e // 2)
     Q = edwards(Q, Q)
 
     if e & 1:
