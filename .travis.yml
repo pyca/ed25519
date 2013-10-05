@@ -21,3 +21,10 @@ install:
 
 script:
     - tox
+
+notifications:
+    irc:
+        channels:
+            - "irc.freenode.org#cryptography-dev"
+        use_notice: true
+        skip_join: true
