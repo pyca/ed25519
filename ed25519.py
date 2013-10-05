@@ -101,7 +101,8 @@ def scalarmult(P, e):
     return Q
 
 
-Bpow = []  # Bpow[i] == scalarmult(B, 2**i)
+# Bpow[i] == scalarmult(B, 2**i)
+Bpow = []
 
 def make_Bpow():
     P = B
@@ -110,9 +111,13 @@ def make_Bpow():
         P = edwards(P, P)
 make_Bpow()
 
+
 def scalarmult_B(e):
-    """== scalarmult(B, e)"""
-    e = e % l  # scalarmult(B, l) is the identity, i.e. (0, 1)
+    """
+    Implements scalarmult(B, e) more efficiently.
+    """
+    # scalarmult(B, l) == (0, 1)
+    e = e % l
     P = (0, 1)
     for i in xrange(253):
         if e & 1:
@@ -131,12 +136,11 @@ def encodeint(y):
 
 
 def encodepoint(P):
-    x = P[0]
-    y = P[1]
+    x, y = P
     bits = [(y >> i) & 1 for i in range(b - 1)] + [x & 1]
     return b''.join([
         int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b//8)
+        for i in range(b // 8)
     ])
 
 
@@ -159,6 +163,7 @@ def Hint(m):
 def signature(m, sk, pk):
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    r = Hint(''.join([h[j] for j in range(b / 8, b / 4)]) + m)
     r = Hint(
         intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
     )
@@ -186,17 +191,21 @@ def decodepoint(s):
     P = (x, y)
 
     if not isoncurve(P):
-        raise Exception("decoding point that is not on curve")
+        raise ValueError("decoding point that is not on curve")
 
     return P
 
 
+class SignatureMismatch(Exception):
+    pass
+
+
 def checkvalid(s, m, pk):
     if len(s) != b // 4:
-        raise Exception("signature length is wrong")
+        raise ValueError("signature length is wrong")
 
     if len(pk) != b // 8:
-        raise Exception("public-key length is wrong")
+        raise ValueError("public-key length is wrong")
 
     R = decodepoint(s[:b // 8])
     A = decodepoint(pk)
@@ -204,4 +213,4 @@ def checkvalid(s, m, pk):
     h = Hint(encodepoint(R) + pk + m)
 
     if scalarmult_B(S) != edwards(R, scalarmult(A, h)):
-        raise Exception("signature does not pass verification")
+        raise SignatureMismatch("signature does not pass verification")
