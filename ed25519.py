@@ -163,7 +163,6 @@ def Hint(m):
 def signature(m, sk, pk):
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
-    r = Hint(''.join([h[j] for j in range(b / 8, b / 4)]) + m)
     r = Hint(
         intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
     )
