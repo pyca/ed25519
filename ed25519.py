@@ -92,6 +92,7 @@ def xrecover(y):
 By = 4 * inv(5)
 Bx = xrecover(By)
 B = (Bx % q, By % q, 1, (Bx * By) % q)
+ident = (0, 1, 1, 0)
 
 
 def edwards(P, Q):
@@ -118,7 +119,7 @@ def edwards(P, Q):
 
 def scalarmult(P, e):
     if e == 0:
-        return (0, 1, 1, 0)
+        return ident
     Q = scalarmult(P, e // 2)
     Q = edwards(Q, Q)
     if e & 1:
@@ -144,7 +145,7 @@ def scalarmult_B(e):
     """
     # scalarmult(B, l) is the identity
     e = e % l
-    P = (0, 1, 1, 0)
+    P = ident
     for i in xrange(253):
         if e & 1:
             P = edwards(P, Bpow[i])
