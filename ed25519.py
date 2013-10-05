@@ -50,8 +50,6 @@ def inv(z):
     Theory, Algorithm 1.3.6
     """
     d, div = z, q
-    if div == 0:
-        return 1
     u = 1
     r = 0
     while div != 0:
@@ -95,7 +93,7 @@ def scalarmult(P, e):
     if e == 0:
         return (0, 1)
 
-    Q = scalarmult(P, e // 2)
+    Q = scalarmult(P, e / 2)
     Q = edwards(Q, Q)
 
     if e & 1:
