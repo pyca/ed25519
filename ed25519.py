@@ -32,13 +32,6 @@ def H(m):
     return hashlib.sha512(m).digest()
 
 
-def pow2(x, p):
-    """== pow(x, 2**p, q)"""
-    while p > 0:
-        x = x * x % q
-        p -= 1
-    return x
-
 def inv(z):
     """
     Use the extended Euclidean algorithm to find the inverse mod q.
