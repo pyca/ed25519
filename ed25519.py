@@ -32,29 +32,20 @@ def H(m):
     return hashlib.sha512(m).digest()
 
 
-def pow2(x, p):
-    """== pow(x, 2**p, q)"""
-    while p > 0:
-        x = x * x % q
-        p -= 1
-    return x
-
-
 def inv(z):
-    """$= z^{-1} \mod q$, for z != 0"""
-    # Adapted from curve25519_athlon.c in djb's Curve25519.
-    z2 = z * z % q                                # 2
-    z9 = pow2(z2, 2) * z % q                      # 9
-    z11 = z9 * z2 % q                             # 11
-    z2_5_0 = (z11 * z11) % q * z9 % q             # 31 == 2^5 - 2^0
-    z2_10_0 = pow2(z2_5_0, 5) * z2_5_0 % q        # 2^10 - 2^0
-    z2_20_0 = pow2(z2_10_0, 10) * z2_10_0 % q     # ...
-    z2_40_0 = pow2(z2_20_0, 20) * z2_20_0 % q
-    z2_50_0 = pow2(z2_40_0, 10) * z2_10_0 % q
-    z2_100_0 = pow2(z2_50_0, 50) * z2_50_0 % q
-    z2_200_0 = pow2(z2_100_0, 100) * z2_100_0 % q
-    z2_250_0 = pow2(z2_200_0, 50) * z2_50_0 % q   # 2^250 - 2^0
-    return pow2(z2_250_0, 5) * z11 % q            # 2^255 - 2^5 + 11 = q - 2
+    """
+    Use the extended Euclidean algorithm to find the inverse mod q.
+
+    See, for example, H. Cohen, A Course in Computational Algebraic Number
+    Theory, Algorithm 1.3.6
+    """
+    d, div = z, q
+    u = 1
+    r = 0
+    while div != 0:
+        (qq, div), d = divmod(d, div), div
+        r, u = u - qq * r, r
+    return u
 
 
 d = -121665 * inv(121666)
@@ -63,7 +54,7 @@ I = pow(2, (q - 1) // 4, q)
 
 def xrecover(y):
     xx = (y * y - 1) * inv(d * y * y + 1)
-    x = pow(xx, (q + 3) // 8, q)
+    x = pow(xx, (q + 3) >> 3, q)
 
     if (x * x - xx) % q != 0:
         x = (x * I) % q
@@ -82,8 +73,11 @@ B = (Bx % q, By % q)
 def edwards(P, Q):
     x1, y1 = P
     x2, y2 = Q
-    x3 = (x1 * y2 + x2 * y1) * inv(1 + d * x1 * x2 * y1 * y2)
-    y3 = (y1 * y2 + x1 * x2) * inv(1 - d * x1 * x2 * y1 * y2)
+    x1y2 = x1 * y2
+    x2y1 = x2 * y1
+    dx1x2y1y2 = d * x1y2 * x2y1
+    x3 = (x1y2 + x2y1) * inv(1 + dx1x2y1y2)
+    y3 = (y1 * y2 + x1 * x2) * inv(1 - dx1x2y1y2)
 
     return (x3 % q, y3 % q)
 
@@ -92,7 +86,7 @@ def scalarmult(P, e):
     if e == 0:
         return (0, 1)
 
-    Q = scalarmult(P, e // 2)
+    Q = scalarmult(P, e >> 1)
     Q = edwards(Q, Q)
 
     if e & 1:
