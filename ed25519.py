@@ -54,7 +54,7 @@ I = pow(2, (q - 1) // 4, q)
 
 def xrecover(y):
     xx = (y * y - 1) * inv(d * y * y + 1)
-    x = pow(xx, (q + 3) // 8, q)
+    x = pow(xx, (q + 3) >> 3, q)
 
     if (x * x - xx) % q != 0:
         x = (x * I) % q
@@ -73,8 +73,11 @@ B = (Bx % q, By % q)
 def edwards(P, Q):
     x1, y1 = P
     x2, y2 = Q
-    x3 = (x1 * y2 + x2 * y1) * inv(1 + d * x1 * x2 * y1 * y2)
-    y3 = (y1 * y2 + x1 * x2) * inv(1 - d * x1 * x2 * y1 * y2)
+    x1y2 = x1 * y2
+    x2y1 = x2 * y1
+    dx1x2y1y2 = d * x1y2 * x2y1
+    x3 = (x1y2 + x2y1) * inv(1 + dx1x2y1y2)
+    y3 = (y1 * y2 + x1 * x2) * inv(1 - dx1x2y1y2)
 
     return (x3 % q, y3 % q)
 
@@ -83,7 +86,7 @@ def scalarmult(P, e):
     if e == 0:
         return (0, 1)
 
-    Q = scalarmult(P, e // 2)
+    Q = scalarmult(P, e >> 1)
     Q = edwards(Q, Q)
 
     if e & 1:
