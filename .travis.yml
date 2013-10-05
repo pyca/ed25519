@@ -6,6 +6,7 @@ env:
     - TOXENV=py32
     - TOXENV=py33
     - TOXENV=pypy
+    - TOXENV=pep8
 
 install:
     # Add the PyPy repository
