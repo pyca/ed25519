@@ -61,9 +61,10 @@ def test_ed25519_kat(secret_key, public_key, message, signed, signature):
         if len(m) == 0:
             forgedm = b"x"
         else:
-            forgedm = b"".join(
-                [chr(ord(m[i]) + (i == len(m) - 1)) for i in range(len(m))]
-            )
+            forgedm = ed25519.intlist2bytes([
+                ed25519.indexbytes(m, i) + (i == len(m) - 1)
+                for i in range(len(m))
+            ])
     except ValueError:
         # TODO: Yes this means that we "pass" a test if we can't generate a
         # forged message. This matches the original test suite, it's
