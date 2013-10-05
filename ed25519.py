@@ -101,10 +101,10 @@ def edwards(P, Q):
     (x1, y1, z1, t1) = P
     (x2, y2, z2, t2) = Q
 
-    a = ( (y1-x1)*(y2-x2) ) % q
-    b = ( (y1+x1)*(y2+x2) ) % q
-    c = ( t1*2*d*t2 ) % q
-    dd = ( z1*2*z2 ) % q
+    a = (y1-x1)*(y2-x2) % q
+    b = (y1+x1)*(y2+x2) % q
+    c = t1*2*d*t2 % q
+    dd = z1*2*z2 % q
     e = b - a
     f = dd - c
     g = dd + c
@@ -203,9 +203,10 @@ def signature(m, sk, pk):
 
 def isoncurve(P):
     (x, y, z, t) = P
-    return ( z%q != 0
-             and (x*y)%q == (z*t)%q
-             and (y*y - x*x - z*z - d*t*t) % q == 0 )
+    return (z % q != 0 and
+            x*y % q == z*t % q and
+            (y*y - x*x - z*z - d*t*t) % q == 0)
+
 
 def decodeint(s):
     return sum(2 ** i * bit(s, i) for i in range(0, b))
@@ -242,5 +243,5 @@ def checkvalid(s, m, pk):
     (x2, y2, z2, t2) = Q = edwards(R, scalarmult(A, h))
 
     if (not isoncurve(P) or not isoncurve(Q) or
-        (x1*z2 - x2*z1) % q != 0 or (y1*z2 - y2*z1) % q != 0):
+       (x1*z2 - x2*z1) % q != 0 or (y1*z2 - y2*z1) % q != 0):
         raise SignatureMismatch("signature does not pass verification")
