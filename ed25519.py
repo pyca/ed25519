@@ -95,7 +95,7 @@ B = (Bx % q, By % q, 1, (Bx * By) % q)
 ident = (0, 1, 1, 0)
 
 
-def edwards(P, Q):
+def edwards_add(P, Q):
     # This is formula sequence 'addition-add-2008-hwcd-3' from
     # http://www.hyperelliptic.org/EFD/g1p/auto-twisted-extended-1.html
     (x1, y1, z1, t1) = P
@@ -117,13 +117,34 @@ def edwards(P, Q):
     return (x3 % q, y3 % q, z3 % q, t3 % q)
 
 
+def edwards_double(P):
+    # This is formula sequence 'dbl-2008-hwcd' from
+    # http://www.hyperelliptic.org/EFD/g1p/auto-twisted-extended-1.html
+    (x1, y1, z1, t1) = P
+
+    a = x1*x1 % q
+    b = y1*y1 % q
+    c = 2*z1*z1 % q
+    # dd = -a
+    e = ((x1+y1)*(x1+y1) - a - b) % q
+    g = -a + b  # dd + b
+    f = g - c
+    h = -a - b  # dd - b
+    x3 = e*f
+    y3 = g*h
+    t3 = e*h
+    z3 = f*g
+
+    return (x3 % q, y3 % q, z3 % q, t3 % q)
+
+
 def scalarmult(P, e):
     if e == 0:
         return ident
     Q = scalarmult(P, e // 2)
-    Q = edwards(Q, Q)
+    Q = edwards_double(Q)
     if e & 1:
-        Q = edwards(Q, P)
+        Q = edwards_add(Q, P)
     return Q
 
 
@@ -135,7 +156,7 @@ def make_Bpow():
     P = B
     for i in xrange(253):
         Bpow.append(P)
-        P = edwards(P, P)
+        P = edwards_double(P)
 make_Bpow()
 
 
@@ -148,7 +169,7 @@ def scalarmult_B(e):
     P = ident
     for i in xrange(253):
         if e & 1:
-            P = edwards(P, Bpow[i])
+            P = edwards_add(P, Bpow[i])
         e = e // 2
     assert e == 0, e
     return P
@@ -240,7 +261,7 @@ def checkvalid(s, m, pk):
     h = Hint(encodepoint(R) + pk + m)
 
     (x1, y1, z1, t1) = P = scalarmult_B(S)
-    (x2, y2, z2, t2) = Q = edwards(R, scalarmult(A, h))
+    (x2, y2, z2, t2) = Q = edwards_add(R, scalarmult(A, h))
 
     if (not isoncurve(P) or not isoncurve(Q) or
        (x1*z2 - x2*z1) % q != 0 or (y1*z2 - y2*z1) % q != 0):
