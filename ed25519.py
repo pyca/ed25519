@@ -114,7 +114,7 @@ def encodepoint(P):
     bits = [(y >> i) & 1 for i in range(b - 1)] + [x & 1]
     return b''.join([
         int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b//8)
+        for i in range(b // 8)
     ])
 
 
