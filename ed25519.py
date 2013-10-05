@@ -91,28 +91,38 @@ def xrecover(y):
 
 By = 4 * inv(5)
 Bx = xrecover(By)
-B = (Bx % q, By % q)
+B = (Bx % q, By % q, 1, (Bx * By) % q)
 
 
 def edwards(P, Q):
-    x1, y1 = P
-    x2, y2 = Q
-    x3 = (x1 * y2 + x2 * y1) * inv(1 + d * x1 * x2 * y1 * y2)
-    y3 = (y1 * y2 + x1 * x2) * inv(1 - d * x1 * x2 * y1 * y2)
+    # This is formula sequence 'addition-add-2008-hwcd-3' from
+    # http://www.hyperelliptic.org/EFD/g1p/auto-twisted-extended-1.html
+    (x1, y1, z1, t1) = P
+    (x2, y2, z2, t2) = Q
 
-    return (x3 % q, y3 % q)
+    a = ( (y1-x1)*(y2-x2) ) % q
+    b = ( (y1+x1)*(y2+x2) ) % q
+    c = ( t1*2*d*t2 ) % q
+    dd = ( z1*2*z2 ) % q
+    e = b - a
+    f = dd - c
+    g = dd + c
+    h = b + a
+    x3 = e*f
+    y3 = g*h
+    t3 = e*h
+    z3 = f*g
+
+    return (x3 % q, y3 % q, z3 % q, t3 % q)
 
 
 def scalarmult(P, e):
     if e == 0:
-        return (0, 1)
-
+        return (0, 1, 1, 0)
     Q = scalarmult(P, e // 2)
     Q = edwards(Q, Q)
-
     if e & 1:
         Q = edwards(Q, P)
-
     return Q
 
 
@@ -132,9 +142,9 @@ def scalarmult_B(e):
     """
     Implements scalarmult(B, e) more efficiently.
     """
-    # scalarmult(B, l) == (0, 1)
+    # scalarmult(B, l) is the identity
     e = e % l
-    P = (0, 1)
+    P = (0, 1, 1, 0)
     for i in xrange(253):
         if e & 1:
             P = edwards(P, Bpow[i])
@@ -152,7 +162,10 @@ def encodeint(y):
 
 
 def encodepoint(P):
-    x, y = P
+    (x, y, z, t) = P
+    zi = inv(z)
+    x = (x * zi) % q
+    y = (y * zi) % q
     bits = [(y >> i) & 1 for i in range(b - 1)] + [x & 1]
     return b''.join([
         int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
@@ -188,9 +201,10 @@ def signature(m, sk, pk):
 
 
 def isoncurve(P):
-    x, y = P
-    return (-x * x + y * y - 1 - d * x * x * y * y) % q == 0
-
+    (x, y, z, t) = P
+    return ( z%q != 0
+             and (x*y)%q == (z*t)%q
+             and (y*y - x*x - z*z - d*t*t) % q == 0 )
 
 def decodeint(s):
     return sum(2 ** i * bit(s, i) for i in range(0, b))
@@ -199,15 +213,11 @@ def decodeint(s):
 def decodepoint(s):
     y = sum(2 ** i * bit(s, i) for i in range(0, b - 1))
     x = xrecover(y)
-
-    if x & 1 != bit(s,  b-1):
-        x = q-x
-
-    P = (x, y)
-
+    if x & 1 != bit(s, b-1):
+        x = q - x
+    P = (x, y, 1, (x*y) % q)
     if not isoncurve(P):
         raise ValueError("decoding point that is not on curve")
-
     return P
 
 
@@ -227,5 +237,9 @@ def checkvalid(s, m, pk):
     S = decodeint(s[b // 8:b // 4])
     h = Hint(encodepoint(R) + pk + m)
 
-    if scalarmult_B(S) != edwards(R, scalarmult(A, h)):
+    (x1, y1, z1, t1) = P = scalarmult_B(S)
+    (x2, y2, z2, t2) = Q = edwards(R, scalarmult(A, h))
+    assert(isoncurve(P) and isoncurve(Q))
+
+    if (x1*z2 - x2*z1) % q != 0 or (y1*z2 - y2*z1) % q != 0:
         raise SignatureMismatch("signature does not pass verification")
