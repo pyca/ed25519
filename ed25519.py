@@ -165,17 +165,21 @@ def decodepoint(s):
     P = (x, y)
 
     if not isoncurve(P):
-        raise Exception("decoding point that is not on curve")
+        raise ValueError("decoding point that is not on curve")
 
     return P
 
 
+class SignatureMismatch(Exception):
+    pass
+
+
 def checkvalid(s, m, pk):
     if len(s) != b // 4:
-        raise Exception("signature length is wrong")
+        raise ValueError("signature length is wrong")
 
     if len(pk) != b // 8:
-        raise Exception("public-key length is wrong")
+        raise ValueError("public-key length is wrong")
 
     R = decodepoint(s[:b // 8])
     A = decodepoint(pk)
@@ -183,4 +187,4 @@ def checkvalid(s, m, pk):
     h = Hint(encodepoint(R) + pk + m)
 
     if scalarmult(B, S) != edwards(R, scalarmult(A, h)):
-        raise Exception("signature does not pass verification")
+        raise SignatureMismatch("signature does not pass verification")

@@ -57,15 +57,19 @@ def test_ed25519_kat(secret_key, public_key, message, signed, signature):
     ed25519.checkvalid(sig, m, pk)
 
     # Assert that we cannot forge a message
-    # TODO: Yes this means that we "pass" a test if we can't generate a forged
-    #   message. This matches the original test suite.
-    with pytest.raises(Exception):
-        if len(m) == 0:
-            forgedm = b"x"
-        else:
+    if len(m) == 0:
+        forgedm = b"x"
+    else:
+        try:
             forgedm = b"".join(
                 [chr(ord(m[i]) + (i == len(m) - 1)) for i in range(len(m))]
             )
+        except ValueError:
+            # TODO: Yes this means that we "pass" a test if we can't generate a
+            # forged message. This matches the original test suite, it's
+            # unclear if it was intentional there or not.
+            return
+    with pytest.raises(ed25519.SignatureMismatch):
         ed25519.checkvalid(sig, forgedm, pk)
 
 
