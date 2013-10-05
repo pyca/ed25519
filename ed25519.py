@@ -100,7 +100,8 @@ def scalarmult(P, e):
     return Q
 
 
-Bpow = []  # Bpow[i] == scalarmult(B, 2**i)
+# Bpow[i] == scalarmult(B, 2**i)
+Bpow = []
 
 def make_Bpow():
     P = B
@@ -109,9 +110,12 @@ def make_Bpow():
         P = edwards(P, P)
 make_Bpow()
 
-# == scalarmult(B, e)
 def scalarmult_B(e):
-    e = e % l  # scalarmult(B, l) == (0, 1)
+    """
+    Implements scalarmult(B, e) more efficiently.
+    """
+    # scalarmult(B, l) == (0, 1)
+    e = e % l
     P = (0, 1)
     for i in xrange(253):
         if e & 1:
