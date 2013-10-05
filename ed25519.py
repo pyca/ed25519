@@ -240,7 +240,7 @@ def checkvalid(s, m, pk):
 
     (x1, y1, z1, t1) = P = scalarmult_B(S)
     (x2, y2, z2, t2) = Q = edwards(R, scalarmult(A, h))
-    assert(isoncurve(P) and isoncurve(Q))
 
-    if (x1*z2 - x2*z1) % q != 0 or (y1*z2 - y2*z1) % q != 0:
+    if (not isoncurve(P) or not isoncurve(Q) or
+        (x1*z2 - x2*z1) % q != 0 or (y1*z2 - y2*z1) % q != 0):
         raise SignatureMismatch("signature does not pass verification")
