@@ -1,8 +1,8 @@
 ed25519
 =======
 
-.. image:: https://travis-ci.org/dstufft/ed25519.png?branch=master
-   :target: https://travis-ci.org/dstufft/ed25519
+.. image:: https://travis-ci.org/pyca/ed25519.png?branch=master
+   :target: https://travis-ci.org/pyca/ed25519
 
 
 `Ed25519 <http://ed25519.cr.yp.to/>`_ is a high speed public key signature
@@ -18,7 +18,7 @@ Warning
 This code is almost never what you want. It is hopefully useful in cases
 where you absolutely cannot have any C code dependencies. Unless you
 absolutely cannot have C code dependencies you would be better off using
-something like `PyNaCl <https://github.com/dstufft/pynacl>`_.
+something like `PyNaCl <https://github.com/pyca/pynacl>`_.
 
 
 Running the tests
