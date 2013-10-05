@@ -87,6 +87,7 @@ def edwards(P, Q):
 
     return (x3 % q, y3 % q)
 
+
 def scalarmult(P, e):
     if e == 0:
         return (0, 1)
@@ -103,12 +104,14 @@ def scalarmult(P, e):
 # Bpow[i] == scalarmult(B, 2**i)
 Bpow = []
 
+
 def make_Bpow():
     P = B
     for i in xrange(253):
         Bpow.append(P)
         P = edwards(P, P)
 make_Bpow()
+
 
 def scalarmult_B(e):
     """
