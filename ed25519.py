@@ -15,6 +15,8 @@
 import hashlib
 import operator
 import sys
+import struct
+import functools
 
 
 __version__ = "1.0.dev0"
@@ -27,6 +29,7 @@ if PY3:
     indexbytes = operator.getitem
     intlist2bytes = bytes
     int2byte = operator.methodcaller("to_bytes", 1, "big")
+    reduce = functools.reduce
 else:
     int2byte = chr
     range = xrange
@@ -201,19 +204,26 @@ def bit(h, i):
 
 def publickey(sk):
     h = H(sk)
-    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    a = 2 ** (b - 2) \
+        + (reduce(lambda a, x: a << 64 | x,
+                  struct.unpack('<QQQQ', h[:b // 8])[::-1], 0)
+           & (2**((b-2) - 3) - 1) << 3)
     A = scalarmult_B(a)
     return encodepoint(A)
 
 
 def Hint(m):
     h = H(m)
-    return sum(2 ** i * bit(h, i) for i in range(2 * b))
+    return reduce(lambda a, x: a << 64 | x,
+                  struct.unpack('<QQQQQQQQ', h[:2 * b // 8])[::-1], 0)
 
 
 def signature(m, sk, pk):
     h = H(sk)
-    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    a = 2 ** (b - 2) \
+        + (reduce(lambda a, x: a << 64 | x,
+                  struct.unpack('<QQQQ', h[:b // 8])[::-1], 0)
+           & (2**((b-2) - 3) - 1) << 3)
     r = Hint(
         intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
     )
@@ -230,11 +240,13 @@ def isoncurve(P):
 
 
 def decodeint(s):
-    return sum(2 ** i * bit(s, i) for i in range(0, b))
+    return reduce(lambda a, x: a << 64 | x,
+                  struct.unpack('<QQQQ', s[:b // 8])[::-1], 0)
 
 
 def decodepoint(s):
-    y = sum(2 ** i * bit(s, i) for i in range(0, b - 1))
+    y = reduce(lambda a, x: a << 64 | x,
+               struct.unpack('<QQQQ', s[:b // 8])[::-1], 0) & (2**(b-1) - 1)
     x = xrecover(y)
     if x & 1 != bit(s, b-1):
         x = q - x
