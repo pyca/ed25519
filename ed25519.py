@@ -204,26 +204,23 @@ def bit(h, i):
 
 def publickey(sk):
     h = H(sk)
-    a = 2 ** (b - 2) \
-        + (reduce(lambda a, x: a << 64 | x,
-                  struct.unpack('<QQQQ', h[:b // 8])[::-1], 0)
-           & (2**((b-2) - 3) - 1) << 3)
+    a = decodeint(h, b)
+    a &= (2**((b-2) - 3) - 1) << 3  # isolate b-2 bits, 3 bits in
+    a += 2 ** (b - 2)  # add algorithm constant
     A = scalarmult_B(a)
     return encodepoint(A)
 
 
 def Hint(m):
     h = H(m)
-    return reduce(lambda a, x: a << 64 | x,
-                  struct.unpack('<QQQQQQQQ', h[:2 * b // 8])[::-1], 0)
+    return decodeint(h, 2 * b)
 
 
 def signature(m, sk, pk):
     h = H(sk)
-    a = 2 ** (b - 2) \
-        + (reduce(lambda a, x: a << 64 | x,
-                  struct.unpack('<QQQQ', h[:b // 8])[::-1], 0)
-           & (2**((b-2) - 3) - 1) << 3)
+    a = decodeint(h, b)
+    a &= (2**((b-2) - 3) - 1) << 3
+    a += 2 ** (b - 2)
     r = Hint(
         intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
     )
@@ -239,14 +236,15 @@ def isoncurve(P):
             (y*y - x*x - z*z - d*t*t) % q == 0)
 
 
-def decodeint(s):
+def decodeint(s, length):
+    slice_size = length // 8
+    num_longs = slice_size // 8
     return reduce(lambda a, x: a << 64 | x,
-                  struct.unpack('<QQQQ', s[:b // 8])[::-1], 0)
+                  struct.unpack('<' + 'Q'*num_longs, s[:slice_size])[::-1], 0)
 
 
 def decodepoint(s):
-    y = reduce(lambda a, x: a << 64 | x,
-               struct.unpack('<QQQQ', s[:b // 8])[::-1], 0) & (2**(b-1) - 1)
+    y = decodeint(s, b) & (2**(b-1) - 1)
     x = xrecover(y)
     if x & 1 != bit(s, b-1):
         x = q - x
@@ -269,7 +267,7 @@ def checkvalid(s, m, pk):
 
     R = decodepoint(s[:b // 8])
     A = decodepoint(pk)
-    S = decodeint(s[b // 8:b // 4])
+    S = decodeint(s[b // 8:b // 4], b)
     h = Hint(encodepoint(R) + pk + m)
 
     (x1, y1, z1, t1) = P = scalarmult_B(S)
