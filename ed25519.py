@@ -101,18 +101,18 @@ def edwards_add(P, Q):
     (x1, y1, z1, t1) = P
     (x2, y2, z2, t2) = Q
 
-    a = (y1-x1)*(y2-x2) % q
-    b = (y1+x1)*(y2+x2) % q
-    c = t1*2*d*t2 % q
-    dd = z1*2*z2 % q
+    a = (y1-x1) * (y2-x2) % q
+    b = (y1+x1) * (y2+x2) % q
+    c = t1 * 2 * d * t2 % q
+    dd = z1 * 2 * z2 % q
     e = b - a
     f = dd - c
     g = dd + c
     h = b + a
-    x3 = e*f
-    y3 = g*h
-    t3 = e*h
-    z3 = f*g
+    x3 = e * f
+    y3 = g * h
+    t3 = e * h
+    z3 = f * g
 
     return (x3 % q, y3 % q, z3 % q, t3 % q)
 
@@ -122,18 +122,18 @@ def edwards_double(P):
     # http://www.hyperelliptic.org/EFD/g1p/auto-twisted-extended-1.html
     (x1, y1, z1, t1) = P
 
-    a = x1*x1 % q
-    b = y1*y1 % q
-    c = 2*z1*z1 % q
+    a = x1 * x1 % q
+    b = y1 * y1 % q
+    c = 2 * z1 * z1 % q
     # dd = -a
-    e = ((x1+y1)*(x1+y1) - a - b) % q
+    e = ((x1+y1) * (x1+y1) - a - b) % q
     g = -a + b  # dd + b
     f = g - c
     h = -a - b  # dd - b
-    x3 = e*f
-    y3 = g*h
-    t3 = e*h
-    z3 = f*g
+    x3 = e * f
+    y3 = g * h
+    t3 = e * h
+    z3 = f * g
 
     return (x3 % q, y3 % q, z3 % q, t3 % q)
 
@@ -176,10 +176,10 @@ def scalarmult_B(e):
 
 
 def encodeint(y):
-    bits = [(y >> i) & 1 for i in range(b)]
+    bits = [(y >> i) & 1 for i in xrange(b)]
     return b''.join([
-        int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b//8)
+        int2byte(sum([bits[i * 8 + j] << j for j in xrange(8)]))
+        for i in xrange(b//8)
     ])
 
 
@@ -188,10 +188,10 @@ def encodepoint(P):
     zi = inv(z)
     x = (x * zi) % q
     y = (y * zi) % q
-    bits = [(y >> i) & 1 for i in range(b - 1)] + [x & 1]
+    bits = [(y >> i) & 1 for i in xrange(b - 1)] + [x & 1]
     return b''.join([
-        int2byte(sum([bits[i * 8 + j] << j for j in range(8)]))
-        for i in range(b // 8)
+        int2byte(sum([bits[i * 8 + j] << j for j in xrange(8)]))
+        for i in xrange(b // 8)
     ])
 
 
@@ -201,21 +201,21 @@ def bit(h, i):
 
 def publickey(sk):
     h = H(sk)
-    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in xrange(3, b - 2))
     A = scalarmult_B(a)
     return encodepoint(A)
 
 
 def Hint(m):
     h = H(m)
-    return sum(2 ** i * bit(h, i) for i in range(2 * b))
+    return sum(2 ** i * bit(h, i) for i in xrange(2 * b))
 
 
 def signature(m, sk, pk):
     h = H(sk)
-    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in xrange(3, b - 2))
     r = Hint(
-        intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
+        intlist2bytes([indexbytes(h, j) for j in xrange(b // 8, b // 4)]) + m
     )
     R = scalarmult_B(r)
     S = (r + Hint(encodepoint(R) + pk + m) * a) % l
@@ -230,11 +230,11 @@ def isoncurve(P):
 
 
 def decodeint(s):
-    return sum(2 ** i * bit(s, i) for i in range(0, b))
+    return sum(2 ** i * bit(s, i) for i in xrange(0, b))
 
 
 def decodepoint(s):
-    y = sum(2 ** i * bit(s, i) for i in range(0, b - 1))
+    y = sum(2 ** i * bit(s, i) for i in xrange(0, b - 1))
     x = xrecover(y)
     if x & 1 != bit(s, b-1):
         x = q - x
