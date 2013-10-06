@@ -27,9 +27,9 @@ if PY3:
     indexbytes = operator.getitem
     intlist2bytes = bytes
     int2byte = operator.methodcaller("to_bytes", 1, "big")
-    xrange = range
 else:
     int2byte = chr
+    range = xrange
 
     def indexbytes(buf, i):
         return ord(buf[i])
@@ -154,7 +154,7 @@ Bpow = []
 
 def make_Bpow():
     P = B
-    for i in xrange(253):
+    for i in range(253):
         Bpow.append(P)
         P = edwards_double(P)
 make_Bpow()
@@ -167,7 +167,7 @@ def scalarmult_B(e):
     # scalarmult(B, l) is the identity
     e = e % l
     P = ident
-    for i in xrange(253):
+    for i in range(253):
         if e & 1:
             P = edwards_add(P, Bpow[i])
         e = e // 2
