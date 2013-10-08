@@ -1,6 +1,6 @@
 import os
-import cProfile
 import sys
+import cProfile
 
 import ed25519
 
@@ -9,16 +9,16 @@ profile.py [case] [loops]
 
 Run profiling of ed25519 functions
 
-case - must be one of:
-       pub -- generating a public key
-       sig -- generating a signature
-       val -- validating a signature
+case  - must be one of:  [default: val]
+        pub -- generating a public key
+        sig -- generating a signature
+        val -- validating a signature
 
-loop - how many times to repeat test
+loops - how many times to repeat test  [default: 300]
 """
 
 seed = os.urandom(32)
-data = b"The quick brown fox jumps over the lazy dog"
+data = b"The quick brown fox jumps over the lazy dog" * 20
 private_key = seed
 public_key = ed25519.publickey(seed)
 signature = ed25519.signature(data, private_key, public_key)
@@ -36,18 +36,20 @@ case = {
 length = 300
 choice = ''
 
-if len(sys.argv) >= 2:
-    if sys.argv[1] == '-h' or sys.argv[1] == '--help':
-        print(help_desc)
-        exit()
-    choice = sys.argv[1]
-if len(sys.argv) >= 3:
-    length = int(sys.argv[2])
+if __name__ == "__main__":
 
-method = case.get(choice, 'val')
+    if len(sys.argv) >= 2:
+        if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+            print(help_desc)
+            exit()
+        choice = sys.argv[1]
+    if len(sys.argv) >= 3:
+        length = int(sys.argv[2])
 
-loop = '[%s for _ in range(%d)]'
+    method = case.get(choice, 'val')
 
-print('Running %s, %d times\n' % (case[method], length))
+    loop = '[%s for _ in range(%d)]'
 
-cProfile.run(loop % (case[method], length))
+    print('Running %s, %d times\n' % (case[method], length))
+
+    cProfile.run(loop % (case[method], length), sort='time')
