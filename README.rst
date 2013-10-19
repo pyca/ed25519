@@ -15,9 +15,12 @@ attacks. The original reference implementation can be found on the
 Warning
 -------
 
-This code is almost never what you want. It is hopefully useful in cases
-where you absolutely cannot have any C code dependencies. Unless you
-absolutely cannot have C code dependencies you would be better off using
+This code is not safe for use with secret data.  Even operating on
+public data (i.e., verifying public signatures on public messages),
+it is slower than alternatives.
+
+This code may be useful in cases where you absolutely cannot have any
+C code dependencies.  Otherwise, you would be better off using
 something like `PyNaCl <https://github.com/pyca/pynacl>`_.
 
 

@@ -12,6 +12,24 @@
 # You should have received a copy of the CC0 Public Domain Dedication along
 # with this software. If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+"""
+NB: This code is not safe for use with secret keys or secret data.
+The only safe use of this code is for verifying signatures on public messages.
+
+Functions for computing the public key of a secret key and for signing
+a message are included, namely publickey_unsafe and signature_unsafe,
+for testing purposes only.
+
+The root of the problem is that Python's long-integer arithmetic is
+not designed for use in cryptography.  Specifically, it may take more
+or less time to execute an operation depending on the values of the
+inputs, and its memory access patterns may also depend on the inputs.
+This opens it to timing and cache side-channel attacks which can
+disclose data to an attacker.  We rely on Python's long-integer
+arithmetic, so we cannot handle secrets without risking their disclosure.
+"""
+
 import hashlib
 import operator
 import sys
@@ -199,7 +217,12 @@ def bit(h, i):
     return (indexbytes(h, i // 8) >> (i % 8)) & 1
 
 
-def publickey(sk):
+def publickey_unsafe(sk):
+    """
+    Not safe to use with secret keys or secret data.
+
+    See module docstring.  This function should be used for testing only.
+    """
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
     A = scalarmult_B(a)
@@ -211,7 +234,12 @@ def Hint(m):
     return sum(2 ** i * bit(h, i) for i in range(2 * b))
 
 
-def signature(m, sk, pk):
+def signature_unsafe(m, sk, pk):
+    """
+    Not safe to use with secret keys or secret data.
+
+    See module docstring.  This function should be used for testing only.
+    """
     h = H(sk)
     a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
     r = Hint(
@@ -249,6 +277,12 @@ class SignatureMismatch(Exception):
 
 
 def checkvalid(s, m, pk):
+    """
+    Not safe to use when any argument is secret.
+
+    See module docstring.  This function should be used only for
+    verifying public signatures of public messages.
+    """
     if len(s) != b // 4:
         raise ValueError("signature length is wrong")
 
