@@ -33,6 +33,8 @@ arithmetic, so we cannot handle secrets without risking their disclosure.
 import hashlib
 import operator
 import sys
+import struct
+import functools
 
 
 __version__ = "1.0.dev0"
@@ -45,6 +47,7 @@ if PY3:
     indexbytes = operator.getitem
     intlist2bytes = bytes
     int2byte = operator.methodcaller("to_bytes", 1, "big")
+    reduce = functools.reduce
 else:
     int2byte = chr
     range = xrange
@@ -224,14 +227,16 @@ def publickey_unsafe(sk):
     See module docstring.  This function should be used for testing only.
     """
     h = H(sk)
-    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    a = decodeint(h, b)
+    a &= (2**((b-2) - 3) - 1) << 3  # isolate b-2 bits, 3 bits in
+    a += 2 ** (b - 2)  # add algorithm constant
     A = scalarmult_B(a)
     return encodepoint(A)
 
 
 def Hint(m):
     h = H(m)
-    return sum(2 ** i * bit(h, i) for i in range(2 * b))
+    return decodeint(h, 2 * b)
 
 
 def signature_unsafe(m, sk, pk):
@@ -241,7 +246,9 @@ def signature_unsafe(m, sk, pk):
     See module docstring.  This function should be used for testing only.
     """
     h = H(sk)
-    a = 2 ** (b - 2) + sum(2 ** i * bit(h, i) for i in range(3, b - 2))
+    a = decodeint(h, b)
+    a &= (2**((b-2) - 3) - 1) << 3
+    a += 2 ** (b - 2)
     r = Hint(
         intlist2bytes([indexbytes(h, j) for j in range(b // 8, b // 4)]) + m
     )
@@ -257,12 +264,15 @@ def isoncurve(P):
             (y*y - x*x - z*z - d*t*t) % q == 0)
 
 
-def decodeint(s):
-    return sum(2 ** i * bit(s, i) for i in range(0, b))
+def decodeint(s, length):
+    slice_size = length // 8
+    num_longs = slice_size // 8
+    return reduce(lambda a, x: a << 64 | x,
+                  struct.unpack('<' + 'Q'*num_longs, s[:slice_size])[::-1], 0)
 
 
 def decodepoint(s):
-    y = sum(2 ** i * bit(s, i) for i in range(0, b - 1))
+    y = decodeint(s, b) & (2**(b-1) - 1)
     x = xrecover(y)
     if x & 1 != bit(s, b-1):
         x = q - x
@@ -291,7 +301,7 @@ def checkvalid(s, m, pk):
 
     R = decodepoint(s[:b // 8])
     A = decodepoint(pk)
-    S = decodeint(s[b // 8:b // 4])
+    S = decodeint(s[b // 8:b // 4], b)
     h = Hint(encodepoint(R) + pk + m)
 
     (x1, y1, z1, t1) = P = scalarmult_B(S)
