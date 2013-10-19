@@ -4,21 +4,30 @@ ed25519
 .. image:: https://travis-ci.org/pyca/ed25519.png?branch=master
    :target: https://travis-ci.org/pyca/ed25519
 
-
-`Ed25519 <http://ed25519.cr.yp.to/>`_ is a high speed public key signature
-system. ``ed25519.py`` is the reference implementation that has been optimized
-for a faster runtime. It does not include protections against side channel
-attacks. The original reference implementation can be found on the
-`authors website <http://ed25519.cr.yp.to/software.html>`_.
+`Ed25519 <http://ed25519.cr.yp.to/>`_ is a high-speed public-key
+signature system.  ``ed25519.py`` is based on the original Python
+implementation published on the Ed25519 website, with major
+optimizations to make it run reasonably fast.
 
 
 Warning
 -------
 
-This code is almost never what you want. It is hopefully useful in cases
-where you absolutely cannot have any C code dependencies. Unless you
-absolutely cannot have C code dependencies you would be better off using
-something like `PyNaCl <https://github.com/pyca/pynacl>`_.
+This code is **not safe** for use with secret data.  Even operating on
+public data (i.e., verifying public signatures on public messages), it
+is slower than alternatives.
+
+The issue is that our computations may behave differently depending on
+their inputs in ways that could reveal those inputs to an attacker;
+they may take different amounts of time, and may have different memory
+access patterns.  These side-channel attacks are difficult to avoid in
+Python, except perhaps with major sacrifice of efficiency.
+
+This code may be useful in cases where you absolutely cannot have any
+C code dependencies.  Otherwise, `PyNaCl
+<https://github.com/pyca/pynacl>`_ provides a version of the original
+author's C implementation, which runs faster and is carefully
+engineered to avoid side-channel attacks.
 
 
 Running the tests

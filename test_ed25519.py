@@ -60,8 +60,8 @@ def test_ed25519_kat(secret_key, public_key, message, signed, signature):
     sk = binascii.unhexlify(secret_key)
     m = binascii.unhexlify(message)
 
-    pk = ed25519.publickey(sk)
-    sig = ed25519.signature(m, sk, pk)
+    pk = ed25519.publickey_unsafe(sk)
+    sig = ed25519.signature_unsafe(m, sk, pk)
 
     # Assert that the signature and public key are what we expected
     assert binascii.hexlify(pk) == public_key
