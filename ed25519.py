@@ -47,7 +47,7 @@ if PY3:
     int2byte = operator.methodcaller("to_bytes", 1, "big")
 else:
     int2byte = chr
-    range = xrange
+    range = xrange  # noqa: F821
 
     def indexbytes(buf, i):
         return ord(buf[i])
@@ -175,6 +175,8 @@ def make_Bpow():
     for i in range(253):
         Bpow.append(P)
         P = edwards_double(P)
+
+
 make_Bpow()
 
 
