@@ -1,0 +1,32 @@
+name: CI
+on:
+  pull_request: {}
+  push:
+    branches:
+      - master
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        PYTHON:
+          - {VERSION: "2.7", TOXENV: "py27"}
+          - {VERSION: "3.5", TOXENV: "py35"}
+          - {VERSION: "3.6", TOXENV: "py36"}
+          - {VERSION: "3.7", TOXENV: "py37"}
+          - {VERSION: "3.8", TOXENV: "py38"}
+          - {VERSION: "3.9", TOXENV: "py39"}
+          - {VERSION: "pypy3", TOXENV: "pypy3"}
+          - {VERSION: "3.6", TOXENV: "pep8"}
+    name: "tox ${{ matrix.PYTHON.TOXENV }}"
+    steps:
+      - uses: actions/checkout@v2                                                                                          
+      - name: Setup python                                                                                                 
+        uses: actions/setup-python@v2                                                                                      
+        with:
+          python-version: ${{ matrix.PYTHON.VERSION }}
+      - run: pip install tox
+      - run: tox
+        env:
+          TOXENV: ${{ matrix.PYTHON.TOXENV }}
