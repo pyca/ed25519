@@ -7,20 +7,23 @@ on:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         PYTHON:
-          - {VERSION: "2.7", TOXENV: "py27"}
           - {VERSION: "3.5", TOXENV: "py35"}
           - {VERSION: "3.6", TOXENV: "py36"}
           - {VERSION: "3.7", TOXENV: "py37"}
           - {VERSION: "3.8", TOXENV: "py38"}
           - {VERSION: "3.9", TOXENV: "py39"}
+          - {VERSION: "3.10", TOXENV: "py310"}
+          - {VERSION: "3.11", TOXENV: "py311"}
+          - {VERSION: "3.12-dev", TOXENV: "py312"}
           - {VERSION: "pypy-3.7", TOXENV: "pypy3"}
           - {VERSION: "pypy-3.8", TOXENV: "pypy3"}
+          - {VERSION: "pypy-3.9", TOXENV: "pypy3"}
+          - {VERSION: "pypy-3.10", TOXENV: "pypy3"}
           - {VERSION: "3.6", TOXENV: "pep8"}
-    name: "tox ${{ matrix.PYTHON.TOXENV }}"
     steps:
       - uses: actions/checkout@v3
       - name: Setup python
