@@ -21,7 +21,7 @@ jobs:
           - {VERSION: "pypy-3.11", TOXENV: "pypy3"}
           - {VERSION: "3.7", TOXENV: "pep8"}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup python
         uses: actions/setup-python@v6
         with:
