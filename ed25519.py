@@ -272,6 +272,8 @@ def checkvalid(s, m, pk):
     R = decodepoint(s[: b // 8])
     A = decodepoint(pk)
     S = decodeint(s[b // 8 : b // 4])
+    if S >= l:
+         raise SignatureMismatch("signature does not pass verification")
     h = Hint(encodepoint(R) + pk + m)
 
     (x1, y1, z1, t1) = P = scalarmult_B(S)
