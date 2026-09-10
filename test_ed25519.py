@@ -98,6 +98,6 @@ def test_checkparams():
     assert pow(ed25519.d, (ed25519.q - 1) // 2, ed25519.q) == ed25519.q - 1
     assert pow(ed25519.I, 2, ed25519.q) == ed25519.q - 1
     assert ed25519.isoncurve(ed25519.B)
-    x, y, z, _t = P = ed25519.scalarmult(ed25519.B, ed25519.l)
+    x, y, z, _ = P = ed25519.scalarmult(ed25519.B, ed25519.l)
     assert ed25519.isoncurve(P)
     assert (x, y) == (0, z)

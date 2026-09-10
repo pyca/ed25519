@@ -117,7 +117,7 @@ def edwards_add(P, Q):
 def edwards_double(P):
     # This is formula sequence 'dbl-2008-hwcd' from
     # http://www.hyperelliptic.org/EFD/g1p/auto-twisted-extended-1.html
-    (x1, y1, z1, _t1) = P
+    (x1, y1, z1, _) = P
 
     a = x1 * x1 % q
     b = y1 * y1 % q
@@ -182,7 +182,7 @@ def encodeint(y):
 
 
 def encodepoint(P):
-    (x, y, z, _t) = P
+    (x, y, z, _) = P
     zi = inv(z)
     x = (x * zi) % q
     y = (y * zi) % q
@@ -273,8 +273,8 @@ def checkvalid(s, m, pk):
     S = decodeint(s[b // 8 : b // 4])
     h = Hint(encodepoint(R) + pk + m)
 
-    (x1, y1, z1, _t1) = P = scalarmult_B(S)
-    (x2, y2, z2, _t2) = Q = edwards_add(R, scalarmult(A, h))
+    (x1, y1, z1, _) = P = scalarmult_B(S)
+    (x2, y2, z2, _) = Q = edwards_add(R, scalarmult(A, h))
 
     if (
         not isoncurve(P)
