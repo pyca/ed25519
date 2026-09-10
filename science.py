@@ -17,7 +17,6 @@ import timeit
 
 import ed25519
 
-
 seed = os.urandom(32)
 
 data = b"The quick brown fox jumps over the lazy dog"
